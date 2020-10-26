@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import {
+import ReactNative, {
   NativeModules,
   View,
   Text,
@@ -9,23 +9,26 @@ import {
   Dimensions,
   ViewPropTypes,
   TextInput,
-  findNodeHandle
 } from "react-native";
 
 import CreditCard from "./CardView/CardView";
 import CCInput from "./CCInput";
 import { InjectedProps } from "./connectToState";
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+
 const s = StyleSheet.create({
   container: {
     alignItems: "center",
   },
   form: {
+    width: 300,
     marginHorizontal: 20,
     marginVertical: 20,
   },
   inputContainer: {
-    marginLeft: 20,
+    // marginLeft: 20,
     marginTop: 20,
     marginBottom: 20,
   },
@@ -70,8 +73,6 @@ export default class CreditCardInput extends Component {
     allowScroll: PropTypes.bool,
 
     additionalInputsProps: PropTypes.objectOf(PropTypes.shape(TextInput.propTypes)),
-
-    scrollViewProps: PropTypes.object,
   };
 
   static defaultProps = {
@@ -103,15 +104,15 @@ export default class CreditCardInput extends Component {
 
   componentDidMount = () => this._focus(this.props.focused);
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.focused !== this.props.focused) this._focus(this.props.focused);
-  }
+  componentWillReceiveProps = newProps => {
+    if (this.props.focused !== newProps.focused) this._focus(newProps.focused);
+  };
 
   _focus = field => {
     if (!field) return;
 
     const scrollResponder = this.refs.Form.getScrollResponder();
-    const nodeHandle = findNodeHandle(this.refs[field]);
+    const nodeHandle = ReactNative.findNodeHandle(this.refs[field]);
 
     NativeModules.UIManager.measureLayoutRelativeToParent(nodeHandle,
       e => { throw e; },
@@ -171,7 +172,6 @@ export default class CreditCardInput extends Component {
       cardScale,
       cardFontFamily,
       cardBrandIcons,
-      scrollViewProps,
     } = this.props;
 
     return (
@@ -192,42 +192,47 @@ export default class CreditCardInput extends Component {
         />
         <ScrollView
           ref="Form"
-          horizontal
+          // horizontal
           keyboardShouldPersistTaps="always"
           scrollEnabled={allowScroll}
           showsHorizontalScrollIndicator={false}
           style={s.form}
-          {...scrollViewProps}
         >
+
+          {requiresPostalCode && (
+            <CCInput
+              {...this._inputProps("postalCode")}
+              keyboardType="numeric"
+              containerStyle={[s.inputContainer, inputContainerStyle, { width: '100%' }]}
+            />
+          )}
+          
           {requiresName && (
             <CCInput
               {...this._inputProps("name")}
-              containerStyle={[s.inputContainer, inputContainerStyle, { width: NAME_INPUT_WIDTH }]}
+              containerStyle={[s.inputContainer, inputContainerStyle, { width: '100%' }]}
             />
           )}
           <CCInput
             {...this._inputProps("number")}
             keyboardType="numeric"
-            containerStyle={[s.inputContainer, inputContainerStyle, { width: CARD_NUMBER_INPUT_WIDTH }]}
+            containerStyle={[s.inputContainer, inputContainerStyle, { width: '100%' }]}
           />
           <CCInput
             {...this._inputProps("expiry")}
             keyboardType="numeric"
-            containerStyle={[s.inputContainer, inputContainerStyle]}
+            containerStyle={[s.inputContainer, inputContainerStyle, { width: 100, left: 0 }]}
           />
           {requiresCVC && (
             <CCInput
               {...this._inputProps("cvc")}
               keyboardType="numeric"
-              containerStyle={[s.inputContainer, inputContainerStyle, { width: CVC_INPUT_WIDTH }]}
+              containerStyle={[s.inputContainer, inputContainerStyle, { width: 200, top: -95, left: 200 }]}
             />
           )}
-          {requiresPostalCode && (
-            <CCInput
-              {...this._inputProps("postalCode")}
-              containerStyle={[s.inputContainer, inputContainerStyle, { width: POSTAL_CODE_INPUT_WIDTH }]}
-            />
-          )}
+
+
+
         </ScrollView>
       </View>
     );
